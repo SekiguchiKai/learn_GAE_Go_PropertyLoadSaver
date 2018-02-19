@@ -1,1 +1,29 @@
 # learn_GAE_Go_PropertyLoadSaver
+
+## Properties
+DatastoreのEntityの中身は、構造体のポインタが格納されることが多いけども、PropertyLoadSaver interfaceを実装すればどんなTypeでもEntityの中身になり得る。
+構造体のポインタであれば、Datastoreが、reflection経由で自動的に変換してくれるので、PropertyLoadSaver interfaceを明示的に実装する必要はない。
+
+構造体のポインタがPropertyLoadSaverを明示的に実装していれば、構造体のポインタのデフォルトの振る舞いより優先的にPropertyLoadSaverのメソッドが使用される。
+構造体のポインタは、より強く型付けされていて、使用しやすい。PropertyLoadSaverはより、フレキシブル。
+
+
+実際のTypeは、 GetとPutで同一のものでなくても良いし、別々のApp Engineのリクエストを横断してもよい
+概念的には、どんなEntityも連続するPropertyとして、保存される。
+フィールドが欠けていたりする不完全なEntityは、結果として `ErrFieldMismatch` になるけども、
+このエラーを致命的(fatal)にするか、回復可能として扱うか、無視するかは、callerによる。
+
+デフォルトでは、構造体のポインタは潜在的にIndex化されていて、proprtyの名前は、構造体のフィールド名と同様である。
+(それゆえに、upper case letterで始まる)
+
+
+## The PropertyLoadSaver Interface
+Entityの中身は、PropertyLoadSaver interfaceを実装した、いかなる型にも成り得る
+これは構造体のポインタかもしれないが、そうでなくても良い。
+Datastore packageは、Entityの中身をGetする際には、Loadメソッドを呼びだす。
+Entityの中身をPutする際にはSaveを呼び出す。
+
+Datastoreに格納されていないフィールドを引き出したり、フィールドを確かめたり、値が好ましいものだけインデックス化
+するような使用をする可能性も含まれる。
+
+
