@@ -34,9 +34,6 @@ func (u *User) Load(ps []datastore.Property) error {
 	return nil
 }
 
-// SaveStruct returns the properties from src as a slice of Properties.
-// src must be a struct pointer.
-
 func (u *User) Save() ([]datastore.Property, error) {
 	// 第一引数のPropertyをSliceにして、それを返す
 	// 引数は、構造体のポインタでないといけない

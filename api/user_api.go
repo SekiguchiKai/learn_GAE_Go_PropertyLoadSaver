@@ -1,8 +1,15 @@
 package api
 
 import (
-	"github.com/mjibson/goon"
 	"net/http"
+	"google.golang.org/appengine"
+)
+
+const (
+	Get = "GET"
+		Post = "POST"
+			Put = "PUT"
+				Delete = "DELETE"
 )
 
 type UserAPI struct{}
@@ -10,20 +17,21 @@ type UserAPI struct{}
 // Battle APIをまとめる
 func (ua *UserAPI) HandleBattleAPI(w http.ResponseWriter, r *http.Request) {
 	method := r.Method
-
-	g := goon.NewGoon(r)
-
 	switch method {
-	case "GET":
-		ua.GetUser(w, r, g)
-	case "POST":
-		ua.Post(w, r, g)
-	case "PUT":
-		ba.doPut(w, r, g)
+	case Get:
+		ua.getUser(w, r)
+	case Post:
+		ua.PostUser(w, r)
+	case Put:
+		ua.PutUser(w, r)
+	case Delete:
+		ua.DeleteUser(w, r)
 	}
 
 }
 func (ua *UserAPI) getUser(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
 
 
 }
