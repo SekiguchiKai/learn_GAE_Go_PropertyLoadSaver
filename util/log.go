@@ -5,7 +5,18 @@ import (
 	"context"
 	"runtime"
 	"google.golang.org/appengine/log"
+	"github.com/gin-gonic/gin"
 )
+
+func RespondAndLog(c *gin.Context, code int, format string, values ...interface{}) {
+	if code >= 500 {
+		ErrorLog(c, format, values...)
+	} else if code >= 400 {
+		InfoLog(c, format, values...)
+	}
+	c.String(code, format, values...)
+}
+
 
 func CriticalLog(c context.Context, format string, args ...interface{}) {
 	_, file, line, ok := runtime.Caller(1)

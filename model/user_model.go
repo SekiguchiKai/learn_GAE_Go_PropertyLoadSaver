@@ -6,13 +6,22 @@ import (
 
 // 変更前の構造体
 type User struct {
-	Name string
+	ID string
+	Name    string
 	Address string
-	Age int
+	Age     int
+}
+
+// Userの一覧を取得する際にClientとのやりとりに使用する
+type UserList struct {
+	List    []User `json:"list"`
+	HasNext bool      `json:"hasNext"`
+	Cursor  string    `json:"cursor"`
 }
 
 // 返納後の構造体
 //type Person struct {
+//  ID string
 //	Name string
 //	Age int
 //	From string
@@ -29,7 +38,6 @@ func (u *User) Load(ps []datastore.Property) error {
 	} else if err != nil {
 		return err
 	}
-
 
 	return nil
 }
