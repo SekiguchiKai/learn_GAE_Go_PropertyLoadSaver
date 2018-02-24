@@ -6,7 +6,10 @@ import (
 	"strconv"
 	"github.com/SekiguchiKai/learn_GAE_Go_PropertyLoadSaver/model"
 	"github.com/pkg/errors"
+	"github.com/SekiguchiKai/learn_GAE_Go_PropertyLoadSaver/store"
 	"net/http"
+	"time"
+	"context"
 )
 
 const (
@@ -34,32 +37,174 @@ func getUser(c *gin.Context) {
 
 	id := getUserID(c)
 
-	var list model.User
+	s := store.NewUserStore(c.Request)
+	var u model.User
+	if exists, err := s.GetUser(id, &u); err != nil {
+		util.RespondAndLog(c, http.StatusInternalServerError, err.Error())
+		return
+	}else if !exists {
+		util.RespondAndLog(c, http.StatusBadRequest, errors.New("Invalid id" + id).Error())
+		return
+	}
 
-	s := store
-
-
-
-
-
-
+	c.JSON(http.StatusOK, u)
 
 }
 
 func getUsers(c *gin.Context) {
+	util.InfoLog(c, "getUsers is called")
+	params, err := newUserQueryParam(c)
+	if err != nil {
+		util.RespondAndLog(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if params.Limit <= 0 {
+		params.Limit = _DefaultUserLimit
+	}
+
+
+	var list model.UserList
+
+	s := store.NewUserStore(c.Request)
+	if err := s.GetUserList(params.Cursor, params.Limit, &list); err != nil {
+		util.RespondAndLog(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, list)
 
 }
 
 
 func createUser(c *gin.Context) {
+	var params model.User
+	// HTTPリクエストで受け取ったJSONを構造体にロードする
+	if err := bindUserFromJson(c, &params); err != nil {
+		util.RespondAndLog(c, http.StatusBadRequest, err.Error())
+		return
+	}
 
+	// 構造体のバリデーションを行う
+	if err := validateParamsForUser(params); err != nil {
+		util.RespondAndLog(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+
+	u := model.NewUser(params)
+	u.UpdatedAt = time.Now().UTC()
+
+
+	err := store.RunInTransaction(c.Request, func(ctx context.Context) error {
+
+		s := store.NewUserStoreWithContext(ctx)
+		// Userは一意になるようにするために、既に同じユーザーが存在するかを確認する
+		if exists, err := s.ExistsUser(u.ID); err != nil {
+			util.RespondAndLog(c, http.StatusInternalServerError, err.Error())
+			return err
+		} else if exists {
+			caution := "There is same user"
+			util.RespondAndLog(c, http.StatusBadRequest, caution)
+			return errors.New(caution)
+		}
+
+		// ユーザーをDatastoreに格納する
+		if err := s.PutUser(u); err != nil {
+			util.RespondAndLog(c, http.StatusInternalServerError, err.Error())
+			return err
+		}
+
+		return nil
+
+	})
+
+	if err != nil {
+		return
+	}
+
+	c.JSON(http.StatusOK, nil)
 }
 
 func updateUser(c *gin.Context) {
+	var params model.User
+	if err := bindUserFromJson(c, &params); err != nil {
+		util.RespondAndLog(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err := validateParamsForUser(params); err != nil {
+		util.RespondAndLog(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	updatedAt := time.Now().UTC()
+
+	err := store.RunInTransaction(c.Request, func(ctx context.Context) error {
+
+		s := store.NewUserStoreWithContext(ctx)
+
+		var source model.User
+		if exists, err := s.GetUser(params.ID, &source); err != nil {
+			util.RespondAndLog(c, http.StatusInternalServerError, err.Error())
+			return err
+		} else if !exists {
+			util.RespondAndLog(c, http.StatusNotFound, "id = %s is not found", params.ID)
+			return errors.New("the airport is not found")
+		}
+
+
+		u := model.UpdatedUser(source, params)
+		u.UpdatedAt = updatedAt
+
+		if err := s.PutUser(u); err != nil {
+			util.RespondAndLog(c, http.StatusInternalServerError, err.Error())
+			return err
+		}
+
+
+		return nil
+
+	})
+
+	if err != nil {
+		return
+	}
+
+	c.JSON(http.StatusOK, nil)
+
 
 }
 
 func deleteUser(c *gin.Context) {
+	id := getUserID(c)
+
+	err := store.RunInTransaction(c.Request, func(ctx context.Context) error {
+
+		s := store.NewUserStoreWithContext(ctx)
+
+		var u model.User
+		if exists, err := s.GetUser(id, &u); err != nil {
+			util.RespondAndLog(c, http.StatusInternalServerError, err.Error())
+			return err
+		} else if !exists {
+			util.RespondAndLog(c, http.StatusNotFound, "id = %s is not found", id)
+			return errors.New("the u is not found")
+		}
+
+		if err := s.DeleteUser(id); err != nil {
+			util.RespondAndLog(c, http.StatusInternalServerError, err.Error())
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return
+	}
+
+	c.JSON(http.StatusOK, nil)
 
 }
 

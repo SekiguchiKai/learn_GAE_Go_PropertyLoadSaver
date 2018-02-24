@@ -2,6 +2,8 @@ package model
 
 import (
 	"google.golang.org/appengine/datastore"
+	"github.com/SekiguchiKai/learn_GAE_Go_PropertyLoadSaver/util"
+	"time"
 )
 
 // 変更前の構造体
@@ -10,6 +12,7 @@ type User struct {
 	Name    string
 	Address string
 	Age     int
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 // Userの一覧を取得する際にClientとのやりとりに使用する
@@ -50,4 +53,21 @@ func (u *User) Save() ([]datastore.Property, error) {
 		return nil, err
 	}
 	return pr, nil
+}
+
+
+func NewUser(param User) User {
+	param.ID = newUserID(param.Name, param.Address)
+	return param
+}
+
+
+func UpdatedUser(source, param User) User {
+	param.Address = source.Address
+	param.Age = source.Age
+	return param
+}
+
+func newUserID(name, address string) string {
+	return util.GetHash(name + "@@" + address)
 }
