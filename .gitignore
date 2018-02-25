@@ -41,3 +41,4 @@ Temporary Items
 *.out
 
 .idea/
+vendor/
