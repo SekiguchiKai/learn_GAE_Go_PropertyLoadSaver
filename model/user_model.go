@@ -8,10 +8,10 @@ import (
 
 // 変更前の構造体
 type User struct {
-	ID string
-	Name    string
-	Address string
-	Age     int
+	ID string `json:"id"`
+	Name    string `json:"name"`
+	Address string `json:"address"`
+	Age     int `json:"age"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 

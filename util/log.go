@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"google.golang.org/appengine/log"
 	"github.com/gin-gonic/gin"
+	"google.golang.org/appengine"
 )
 
 func RespondAndLog(c *gin.Context, code int, format string, values ...interface{}) {
@@ -18,47 +19,59 @@ func RespondAndLog(c *gin.Context, code int, format string, values ...interface{
 }
 
 
-func CriticalLog(c context.Context, format string, args ...interface{}) {
+func CriticalLog(c *gin.Context, format string, args ...interface{}) {
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
 		file = "nofile"
 		line = -1
 	}
-	log.Criticalf(c, file+":"+strconv.Itoa(line)+":"+format, args...)
+	ctx := getGoContextFromGinContext(c)
+	log.Criticalf(ctx, file+":"+strconv.Itoa(line)+":"+format, args...)
 }
 
-func DebugLog(c context.Context, format string, args ...interface{}) {
+func DebugLog(c *gin.Context, format string, args ...interface{}) {
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
 		file = "nofile"
 		line = -1
 	}
-	log.Debugf(c, file+":"+strconv.Itoa(line)+":"+format, args...)
+	ctx := getGoContextFromGinContext(c)
+	log.Debugf(ctx, file+":"+strconv.Itoa(line)+":"+format, args...)
 }
 
-func ErrorLog(c context.Context, format string, args ...interface{}) {
+func ErrorLog(c *gin.Context, format string, args ...interface{}) {
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
 		file = "nofile"
 		line = -1
 	}
-	log.Errorf(c, file+":"+strconv.Itoa(line)+":"+format, args...)
+	ctx := getGoContextFromGinContext(c)
+	log.Errorf(ctx, file+":"+strconv.Itoa(line)+":"+format, args...)
 }
 
-func InfoLog(c context.Context, format string, args ...interface{}) {
+func InfoLog(c *gin.Context, format string, args ...interface{}) {
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
 		file = "nofile"
 		line = -1
 	}
-	log.Infof(c, file+":"+strconv.Itoa(line)+":"+format, args...)
+
+	ctx := getGoContextFromGinContext(c)
+	log.Infof(ctx, file+":"+strconv.Itoa(line)+":"+format, args...)
 }
 
-func WarningLog(c context.Context, format string, args ...interface{}) {
+func WarningLog(c *gin.Context, format string, args ...interface{}) {
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
 		file = "nofile"
 		line = -1
 	}
-	log.Warningf(c, file+":"+strconv.Itoa(line)+":"+format, args...)
+
+	ctx := getGoContextFromGinContext(c)
+	log.Warningf(ctx, file+":"+strconv.Itoa(line)+":"+format, args...)
+}
+
+func getGoContextFromGinContext(c *gin.Context)context.Context {
+	r := c.Request
+	return appengine.NewContext(r)
 }

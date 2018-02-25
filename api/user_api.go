@@ -78,6 +78,7 @@ func getUsers(c *gin.Context) {
 
 
 func createUser(c *gin.Context) {
+	util.InfoLog(c, "createUser is called")
 	var params model.User
 	// HTTPリクエストで受け取ったJSONを構造体にロードする
 	if err := bindUserFromJson(c, &params); err != nil {
@@ -127,6 +128,7 @@ func createUser(c *gin.Context) {
 }
 
 func updateUser(c *gin.Context) {
+	util.InfoLog(c, "updateUser is called")
 	var params model.User
 	if err := bindUserFromJson(c, &params); err != nil {
 		util.RespondAndLog(c, http.StatusBadRequest, err.Error())
@@ -177,6 +179,7 @@ func updateUser(c *gin.Context) {
 }
 
 func deleteUser(c *gin.Context) {
+	util.InfoLog(c, "deleteUser is called")
 	id := getUserID(c)
 
 	err := store.RunInTransaction(c.Request, func(ctx context.Context) error {
